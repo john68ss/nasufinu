@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 import { getPublicSettings } from "@/config/app";
 import { Card, Section } from "@/components/ui/card";
 import { IntegrationsPanel } from "@/components/settings/integrations";
-import { requireSession } from "@/lib/auth/guard";
 import { getIntegrationSummary } from "@/lib/settings/summary";
 
 export const metadata: Metadata = { title: "Setări" };
@@ -23,7 +22,6 @@ function Item({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 export default async function SettingsPage() {
-  await requireSession();
   const s = getPublicSettings();
   const summary = await getIntegrationSummary();
 

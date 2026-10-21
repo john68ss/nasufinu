@@ -3,7 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 export interface StoredHiveos {
-  /** Encrypted with SESSION_SECRET; never leaves the server. */
+  /** Encrypted with SETTINGS_SECRET; never leaves the server. */
   tokenEnc: string;
   farmId?: string;
   farmName?: string;

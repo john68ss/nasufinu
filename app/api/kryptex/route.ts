@@ -1,6 +1,6 @@
-import { jsonResponse, withAuth } from "@/lib/api/respond";
+import { jsonResponse, withErrorHandling } from "@/lib/api/respond";
 import { getKryptex } from "@/lib/services/kryptex";
 
 export const dynamic = "force-dynamic";
 
-export const GET = withAuth(async () => jsonResponse(await getKryptex()));
+export const GET = withErrorHandling(async () => jsonResponse(await getKryptex()));

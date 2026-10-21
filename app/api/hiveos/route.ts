@@ -1,6 +1,6 @@
-import { jsonResponse, withAuth } from "@/lib/api/respond";
+import { jsonResponse, withErrorHandling } from "@/lib/api/respond";
 import { getRig } from "@/lib/services/hiveos";
 
 export const dynamic = "force-dynamic";
 
-export const GET = withAuth(async () => jsonResponse(await getRig()));
+export const GET = withErrorHandling(async () => jsonResponse(await getRig()));

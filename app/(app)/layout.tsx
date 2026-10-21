@@ -1,12 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { LogOut, Settings } from "lucide-react";
-import { logoutAction } from "@/lib/auth/actions";
-import { requireSession } from "@/lib/auth/guard";
+import { Settings } from "lucide-react";
 
-export default async function AppLayout({ children }: LayoutProps<"/">) {
-  await requireSession();
-
+export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="mx-auto w-full max-w-7xl">
       <nav
@@ -26,15 +22,6 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             >
               <Settings className="size-4" />
             </Link>
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                aria-label="Deconectare"
-                className="inline-flex size-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-danger"
-              >
-                <LogOut className="size-4" />
-              </button>
-            </form>
           </div>
         </div>
       </nav>

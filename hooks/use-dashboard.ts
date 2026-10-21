@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { DashboardData } from "@/types/dashboard";
 
 const MAX_BACKOFF_MS = 300_000;
@@ -9,7 +8,7 @@ const MAX_BACKOFF_MS = 300_000;
 export interface DashboardState {
   data: DashboardData;
   refreshing: boolean;
-  /** The browser could not reach our own API (offline, session expired...). */
+  /** The browser could not reach our own API (offline...). */
   networkError: boolean;
   /** Unix ms of the last successful round-trip to /api/dashboard. */
   lastSyncAt: number;
@@ -23,7 +22,6 @@ export interface DashboardState {
  */
 export function useDashboard(initial: DashboardData): DashboardState {
   const intervalMs = initial.settings.refreshIntervalSeconds * 1000;
-  const router = useRouter();
   const [data, setData] = useState(initial);
   const [refreshing, setRefreshing] = useState(false);
   const [networkError, setNetworkError] = useState(false);
@@ -40,10 +38,6 @@ export function useDashboard(initial: DashboardData): DashboardState {
     setRefreshing(true);
     try {
       const response = await fetch("/api/dashboard", { cache: "no-store", signal: abort.signal });
-      if (response.status === 401) {
-        router.replace("/login");
-        return;
-      }
       if (!response.ok) throw new Error("bad_status");
       const next = (await response.json()) as DashboardData;
       setData(next);
@@ -61,7 +55,7 @@ export function useDashboard(initial: DashboardData): DashboardState {
         setRefreshing(false);
       }
     }
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     let timer: number | undefined;

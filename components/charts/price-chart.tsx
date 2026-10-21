@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, Section } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
@@ -51,7 +50,6 @@ function PriceTooltip({ active, payload, base }: TooltipProps) {
 
 export function PriceChart() {
   const [range, setRange] = useState<HistoryRange>("7d");
-  const router = useRouter();
   const [results, setResults] = useState<Partial<Record<HistoryRange, Loaded>>>({});
   const fetchedAt = useRef<Partial<Record<HistoryRange, number>>>({});
 
@@ -62,10 +60,6 @@ export function PriceChart() {
 
     fetch(`/api/pearl/history?range=${range}`, { cache: "no-store", signal: abort.signal })
       .then(async (response) => {
-        if (response.status === 401) {
-          router.replace("/login");
-          return;
-        }
         const body = (await response.json()) as ServiceResult<PriceHistory>;
         const loaded: Loaded =
           body.data && body.data.points.length > 1
@@ -79,7 +73,7 @@ export function PriceChart() {
         setResults((prev) => (prev[range]?.state === "ok" ? prev : { ...prev, [range]: { state: "error", message: "Date temporar indisponibile" } }));
       });
     return () => abort.abort();
-  }, [range, router]);
+  }, [range]);
 
   const current = results[range];
   const points = current?.state === "ok" ? current.data.points : null;

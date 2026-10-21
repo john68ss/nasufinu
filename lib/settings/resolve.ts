@@ -18,9 +18,9 @@ export interface KryptexCreds {
 
 /** Decrypted saved token, if any (used while picking a worker). */
 export async function getSavedHiveosToken(): Promise<string | null> {
-  const auth = getServerConfig().auth;
+  const secret = getServerConfig().settingsSecret;
   const saved = (await readSettings()).hiveos;
-  return auth && saved ? decryptSecret(saved.tokenEnc, auth.sessionSecret) : null;
+  return secret && saved ? decryptSecret(saved.tokenEnc, secret) : null;
 }
 
 /** Settings saved in the UI take priority over environment variables. */
@@ -28,7 +28,7 @@ export async function resolveHiveos(): Promise<HiveosCreds | null> {
   const config = getServerConfig();
   const saved = (await readSettings()).hiveos;
   if (saved?.farmId && saved.workerId) {
-    const token = config.auth ? decryptSecret(saved.tokenEnc, config.auth.sessionSecret) : null;
+    const token = config.settingsSecret ? decryptSecret(saved.tokenEnc, config.settingsSecret) : null;
     if (token) {
       return {
         token,

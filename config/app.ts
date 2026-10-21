@@ -10,10 +10,7 @@ const withDefault = <T extends z.ZodType>(schema: T, value: z.output<T>) =>
 const num = (min: number, max: number) => z.coerce.number().min(min).max(max);
 
 const shape = {
-  AUTH_USERNAME: opt(z.string().min(1).max(128)),
-  AUTH_PASSWORD_HASH: opt(z.string().regex(/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/)),
-  SESSION_SECRET: opt(z.string().min(32)),
-  SESSION_MAX_AGE_HOURS: withDefault(num(1, 24 * 30), 72),
+  SETTINGS_SECRET: opt(z.string().min(32)),
 
   HIVEOS_API_TOKEN: opt(z.string().min(10)),
   HIVEOS_FARM_ID: opt(z.string().regex(/^\d{1,12}$/)),
@@ -46,12 +43,8 @@ type EnvValues = { [K in keyof typeof shape]?: z.output<(typeof shape)[K]> };
 export type HashrateUnit = "hs" | "khs" | "mhs" | "ghs";
 
 export interface ServerConfig {
-  auth: {
-    username: string;
-    passwordHash: string;
-    sessionSecret: string;
-    sessionMaxAgeSeconds: number;
-  } | null;
+  /** Encrypts the HiveOS token saved from the Settings page. */
+  settingsSecret: string | null;
   hiveos: { token: string; farmId: string; workerId: string; hashrateUnit: HashrateUnit } | null;
   kryptex: { address: string; coin: string; workerName: string | null } | null;
   coingecko: { coinId: string; apiKey: string | null; plan: "demo" | "pro" } | null;
@@ -102,15 +95,7 @@ export function getServerConfig(): ServerConfig {
   const coin = v.KRYPTEX_COIN ?? "prl";
 
   cached = {
-    auth:
-      v.AUTH_USERNAME && v.AUTH_PASSWORD_HASH && v.SESSION_SECRET
-        ? {
-            username: v.AUTH_USERNAME,
-            passwordHash: v.AUTH_PASSWORD_HASH,
-            sessionSecret: v.SESSION_SECRET,
-            sessionMaxAgeSeconds: Math.round((v.SESSION_MAX_AGE_HOURS ?? 72) * 3600),
-          }
-        : null,
+    settingsSecret: v.SETTINGS_SECRET ?? null,
     hiveos:
       v.HIVEOS_API_TOKEN && v.HIVEOS_FARM_ID && v.HIVEOS_WORKER_ID
         ? {

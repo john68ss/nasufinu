@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getServerConfig } from "@/config/app";
 import { clearServiceCache } from "@/lib/cache/service-cache";
-import { requireSession } from "@/lib/auth/guard";
 import { fetchJson } from "@/lib/http/fetch-json";
 import { encryptSecret } from "@/lib/settings/crypto";
 import { getSavedHiveosToken } from "@/lib/settings/resolve";
@@ -68,9 +67,8 @@ function hiveosError(error: unknown): string {
 
 /** Verifies the token, saves it encrypted, and returns farms/workers to pick from. */
 export async function connectHiveosAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
-  const auth = getServerConfig().auth;
-  if (!auth) return fail("Autentificarea nu este configurată.");
+  const secret = getServerConfig().settingsSecret;
+  if (!secret) return fail("Lipsește variabila de mediu SETTINGS_SECRET (minim 32 de caractere).");
   if (getPersistence() === "none") return fail(STORAGE_ERROR);
 
   const input = z.string().trim().max(4096).regex(/^[^\s]*$/).safeParse(formData.get("token") ?? "");
@@ -90,7 +88,7 @@ export async function connectHiveosAction(_prev: FormState, formData: FormData):
     await updateSettings((s) => ({
       ...s,
       hiveos: {
-        tokenEnc: encryptSecret(token, auth.sessionSecret),
+        tokenEnc: encryptSecret(token, secret),
         ...(only
           ? { farmId: only.farm.id, farmName: only.farm.name, workerId: only.worker.id, workerName: only.worker.name }
           : {}),
@@ -107,7 +105,6 @@ export async function connectHiveosAction(_prev: FormState, formData: FormData):
 const selectSchema = z.object({ worker: z.string().regex(/^\d{1,12}:\d{1,12}$/) });
 
 export async function selectHiveosWorkerAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
   if (getPersistence() === "none") return fail(STORAGE_ERROR);
   const parsed = selectSchema.safeParse({ worker: formData.get("worker") });
   if (!parsed.success) return fail("Alege un worker.");
@@ -145,7 +142,6 @@ export async function selectHiveosWorkerAction(_prev: FormState, formData: FormD
 }
 
 export async function disconnectHiveosAction(): Promise<FormState> {
-  await requireSession();
   try {
     await updateSettings((s) => ({ ...s, hiveos: undefined }));
   } catch {
@@ -162,7 +158,6 @@ const walletSchema = z.object({
 });
 
 export async function saveWalletAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireSession();
   if (getPersistence() === "none") return fail(STORAGE_ERROR);
   const parsed = walletSchema.safeParse({
     address: formData.get("address") ?? "",
@@ -188,7 +183,6 @@ export async function saveWalletAction(_prev: FormState, formData: FormData): Pr
 }
 
 export async function removeWalletAction(): Promise<FormState> {
-  await requireSession();
   try {
     await updateSettings((s) => ({ ...s, kryptex: undefined }));
   } catch {

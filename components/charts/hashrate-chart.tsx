@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
@@ -46,7 +45,6 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: Readonl
 
 export function HashrateChart() {
   const [range, setRange] = useState<HashrateRange>("day");
-  const router = useRouter();
   const [results, setResults] = useState<Partial<Record<HashrateRange, Loaded>>>({});
   const fetchedAt = useRef<Partial<Record<HashrateRange, number>>>({});
 
@@ -57,10 +55,6 @@ export function HashrateChart() {
 
     fetch(`/api/kryptex/chart?range=${range}`, { cache: "no-store", signal: abort.signal })
       .then(async (response) => {
-        if (response.status === 401) {
-          router.replace("/login");
-          return;
-        }
         const body = (await response.json()) as ServiceResult<HashrateHistory>;
         const loaded: Loaded =
           body.data && body.data.points.length > 1
@@ -76,7 +70,7 @@ export function HashrateChart() {
         );
       });
     return () => abort.abort();
-  }, [range, router]);
+  }, [range]);
 
   const current = results[range];
   const points = current?.state === "ok" ? current.data.points : null;

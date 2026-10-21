@@ -1,7 +1,7 @@
 import "server-only";
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from "node:crypto";
 
-// AES-256-GCM; the key is derived from SESSION_SECRET, so rotating it invalidates saved tokens.
+// AES-256-GCM; the key is derived from SETTINGS_SECRET, so rotating it invalidates saved tokens.
 function deriveKey(secret: string): Buffer {
   return Buffer.from(hkdfSync("sha256", secret, "pearl-dashboard", "settings-encryption-v1", 32));
 }
