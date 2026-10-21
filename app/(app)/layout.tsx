@@ -11,7 +11,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       >
         <div className="flex min-h-11 items-center justify-between gap-3 px-3 sm:px-5">
           <Link href="/" className="flex items-center gap-2 rounded-lg py-1.5           text-base font-semibold tracking-tight">
-                      <Image src="/logo.png" alt="" width={40} height={40} unoptimized className="size-10 object-contain" />
+                      <Image src="/logo.png" alt="" width={51} height={40} unoptimized className="h-10 w-auto object-contain" />
                       NAȘU ȘI FINU
           </Link>
           <div className="flex items-center">
