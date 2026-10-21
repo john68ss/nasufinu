@@ -18,7 +18,7 @@ export async function getIntegrationSummary() {
     kryptex: {
       address: stored.kryptex?.address ?? env.kryptex?.address ?? "",
       coin: stored.kryptex?.coin ?? env.kryptex?.coin ?? "prl",
-      workerName: stored.kryptex?.workerName ?? env.kryptex?.workerName ?? "",
+      workerName: stored.kryptex ? (stored.kryptex.workerName ?? "") : (env.kryptex?.workerName ?? ""),
       saved: Boolean(stored.kryptex),
       fromEnv: !stored.kryptex && Boolean(env.kryptex),
     },

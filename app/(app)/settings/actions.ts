@@ -2,12 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getServerConfig } from "@/config/app";
 import { clearServiceCache } from "@/lib/cache/service-cache";
 import { fetchJson } from "@/lib/http/fetch-json";
 import { encryptSecret } from "@/lib/settings/crypto";
 import { getSavedHiveosToken } from "@/lib/settings/resolve";
-import { getPersistence, updateSettings } from "@/lib/settings/store";
+import { getEncryptionSecret, getPersistence, updateSettings } from "@/lib/settings/store";
 
 const HIVEOS = "https://api2.hiveos.farm/api/v2";
 const KRYPTEX = "https://pool.kryptex.com";
@@ -67,8 +66,8 @@ function hiveosError(error: unknown): string {
 
 /** Verifies the token, saves it encrypted, and returns farms/workers to pick from. */
 export async function connectHiveosAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const secret = getServerConfig().settingsSecret;
-  if (!secret) return fail("Lipsește variabila de mediu SETTINGS_SECRET (minim 32 de caractere).");
+  const secret = getEncryptionSecret();
+  if (!secret) return fail(STORAGE_ERROR);
   if (getPersistence() === "none") return fail(STORAGE_ERROR);
 
   const input = z.string().trim().max(4096).regex(/^[^\s]*$/).safeParse(formData.get("token") ?? "");
