@@ -1,13 +1,15 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Activity, ArrowDownRight, ArrowUpRight, Coins, Gauge, TrendingUp, Zap } from "lucide-react";
+import { Activity, ArrowDownRight, Banknote, ArrowUpRight, Coins, Gauge, TrendingUp, Zap } from "lucide-react";
 import { StatusDot, TONE_TEXT, type Tone } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Unavailable } from "@/components/ui/stat";
+import { moneyFromUsd } from "@/lib/calculations/economics";
 import { cn } from "@/lib/utils/cn";
 import {
   DASH,
+  formatCoin,
   formatEfficiency,
   formatHashrate,
   formatKwh,
@@ -67,8 +69,40 @@ export function OverviewCards({ data, now }: { data: DashboardData; now: number 
   const profit = pickMoney(economics.dailyProfit, cur);
   const profitTone: Tone = profit == null ? "neutral" : profit >= 0 ? "ok" : "danger";
 
+  const earnedToday = data.earnings?.todayPrl ?? null;
+  const balance = kryptex.data?.balance ?? null;
+  const paid = kryptex.data?.paid ?? null;
+  const pending = balance?.unconfirmed ?? null;
+  const unpaid = balance?.total ?? (balance?.confirmed != null ? balance.confirmed + (pending ?? 0) : (kryptex.data?.unpaid ?? null));
+  const totalEarned = paid != null || unpaid != null ? (paid ?? 0) + (unpaid ?? 0) : null;
+  const price = m?.priceUsd ?? null;
+  const fiat = (prl: number | null) => (prl == null || price == null ? null : formatMoneyIn(moneyFromUsd(prl * price, data.fx.data), cur));
+
   return (
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
+      <MetricCard label="Câștig total" icon={<Banknote />} className="col-span-2 lg:col-span-5">
+        {kryptex.data ? (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted">Total pe zi (azi, UTC)</div>
+              <Value tone="ok">{earnedToday != null ? formatCoin(earnedToday) : DASH}</Value>
+              <Hint>{fiat(earnedToday) ? `≈ ${fiat(earnedToday)}` : "Neraportat încă"}</Hint>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-muted">Total (plătit + sold + în așteptare)</div>
+              <Value tone="accent">{totalEarned != null ? formatCoin(totalEarned) : DASH}</Value>
+              <Hint>
+                {fiat(totalEarned) ? `≈ ${fiat(totalEarned)} · ` : ""}din care în așteptare {pending != null ? formatCoin(pending) : DASH}
+                {" "}(neconfirmat)
+              </Hint>
+            </div>
+          </div>
+        ) : (
+          <NoData result={kryptex} />
+        )}
+        <ServiceNote result={kryptex} now={now} />
+      </MetricCard>
+
       <MetricCard label="Stare rig" icon={<Activity />} className="col-span-2 lg:col-span-1">
         {rigData ? (
           <>
