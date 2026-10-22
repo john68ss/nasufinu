@@ -6,7 +6,9 @@ import { Card, Section } from "@/components/ui/card";
 import { Segmented } from "@/components/ui/segmented";
 import { Unavailable } from "@/components/ui/stat";
 import { NoData, ServiceNote } from "@/components/dashboard/service-note";
+import { moneyFromUsd } from "@/lib/calculations/economics";
 import { formatCoin, formatMoney, formatNumber } from "@/lib/utils/format";
+import { formatMoneyIn } from "@/lib/utils/money";
 import { utcDayStart } from "@/lib/utils/time";
 import type { DashboardData } from "@/types/dashboard";
 
@@ -59,6 +61,10 @@ export function EarningsChart({ data, now }: { data: DashboardData; now: number 
   }, [all, range, today]);
 
   const total = rows.reduce((a, r) => a + r.reward, 0);
+  const cur = data.settings.displayCurrency;
+  const secondCur = cur === "USD" ? "EUR" : "USD";
+  const fiat = (prl: number) => (priceUsd == null ? null : moneyFromUsd(prl * priceUsd, data.fx.data));
+  const totalMoney = fiat(total);
 
   return (
     <Section
@@ -76,10 +82,20 @@ export function EarningsChart({ data, now }: { data: DashboardData; now: number 
           <>
             <div className="mb-2 flex items-baseline justify-between gap-3 px-1">
               <div>
-                <div className="tabular text-base font-semibold">{formatCoin(total)}</div>
-                <div className="text-[11px] text-muted">
-                  ultimele {rows.length} zile{priceUsd != null ? ` · ≈ ${formatMoney(total * priceUsd, "USD")} la prețul curent` : ""}
-                </div>
+                {totalMoney ? (
+                  <>
+                    <div className="tabular text-lg font-semibold leading-tight">{formatMoneyIn(totalMoney, cur)}</div>
+                    <div className="tabular text-lg font-semibold leading-tight">{formatMoneyIn(totalMoney, secondCur)}</div>
+                    <div className="tabular text-[11px] text-muted">
+                      {formatCoin(total)} · ultimele {rows.length} zile
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="tabular text-base font-semibold">{formatCoin(total)}</div>
+                    <div className="text-[11px] text-muted">ultimele {rows.length} zile</div>
+                  </>
+                )}
               </div>
               <div className="tabular text-right text-xs text-muted">
                 medie {formatNumber(total / rows.length, 3)}
@@ -133,7 +149,16 @@ export function EarningsChart({ data, now }: { data: DashboardData; now: number 
             {kryptex.data.payouts.map((p) => (
               <li key={`${p.date}-${p.txid ?? p.received}`} className="flex items-center justify-between gap-3 py-2 text-sm">
                 <span className="text-muted">{dayFmt.format(p.date)}</span>
-                <span className="tabular font-medium">{formatCoin(p.received)}</span>
+                <span className="tabular text-right font-medium">
+                  {fiat(p.received) ? (
+                    <>
+                      {formatMoneyIn(fiat(p.received)!, cur)} · {formatMoneyIn(fiat(p.received)!, secondCur)}
+                      <span className="block text-[11px] font-normal text-muted">{formatCoin(p.received)}</span>
+                    </>
+                  ) : (
+                    formatCoin(p.received)
+                  )}
+                </span>
                 <span className="text-xs text-subtle">{p.status ?? ""}</span>
               </li>
             ))}

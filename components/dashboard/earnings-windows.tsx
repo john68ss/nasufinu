@@ -51,13 +51,21 @@ export function EarningsWindows({ data, now }: { data: DashboardData; now: numbe
   const k = kryptex.data;
   const price = market.data?.priceUsd ?? null;
 
-  /** "≈ 21.08 USD · 100.1 RON" style line in the display currency, then USD. */
-  const fiat = (prl: number | null | undefined): string | undefined => {
-    if (prl == null || price == null) return undefined;
+  /** Fiat first (display currency large, USD below), PEARL small. Falls back to PEARL when the price is unknown. */
+  const w = (prl: number | null | undefined, empty: ReactNode = DASH): { value: ReactNode; sub?: ReactNode } => {
+    if (prl == null) return { value: empty };
+    if (price == null) return { value: <>{amount(prl)}<Unit /></> };
     const money = moneyFromUsd(prl * price, fx.data);
-    const main = formatMoneyIn(money, cur);
-    const second = cur === "USD" ? formatMoneyIn(money, "EUR") : formatMoneyIn(money, "USD");
-    return `≈ ${main} · ${second}`;
+    const secondCur = cur === "USD" ? "EUR" : "USD";
+    return {
+      value: (
+        <>
+          <div>{formatMoneyIn(money, cur)}</div>
+          <div>{formatMoneyIn(money, secondCur)}</div>
+        </>
+      ),
+      sub: `${amount(prl)} PEARL`,
+    };
   };
 
   const balance = k?.balance ?? null;
@@ -67,53 +75,28 @@ export function EarningsWindows({ data, now }: { data: DashboardData; now: numbe
   if (!k) return null;
 
   return (
-    <Section id="earnings-windows" title="Câștiguri și sold" description={`Sume în PEARL, convertite la prețul curent · „azi” = ziua UTC (${todayUtc})`}>
+    <Section id="earnings-windows" title="Câștiguri și sold" description={`Sume în lei/dolari la prețul curent, PEARL dedesubt · „azi” = ziua UTC (${todayUtc})`}>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <Window
           label="Câștigat azi"
           icon={<Banknote />}
           tone="ok"
-          value={
-            earnings?.todayPrl != null ? (
-              <>
-                {amount(earnings.todayPrl)}
-                <Unit />
-              </>
-            ) : (
-              <span className="text-sm text-subtle">Neraportat încă</span>
-            )
-          }
-          sub={fiat(earnings?.todayPrl)}
+          {...w(earnings?.todayPrl, <span className="text-sm text-subtle">Neraportat încă</span>)}
         />
-        <Window
-          label="Sold"
-          icon={<Wallet />}
-          tone="accent"
-          value={
-            balance?.total != null ? (
-              <>
-                {amount(balance.total)}
-                <Unit />
-              </>
-            ) : (
-              DASH
-            )
-          }
-          sub={fiat(balance?.total)}
-        >
+        <Window label="Sold" icon={<Wallet />} tone="accent" {...w(balance?.total)}>
           {balance ? (
             <div className="tabular text-[11px] text-muted">
-              Confirmat {amount(balance.confirmed)} · În așteptare {amount(balance.unconfirmed)}
+              Confirmat {amount(balance.confirmed)} · În așteptare {amount(balance.unconfirmed)} PEARL
             </div>
           ) : null}
         </Window>
-        <Window label="Ieri" icon={<Clock3 />} value={<>{amount(earnings?.yesterdayPrl)}<Unit /></>} sub={fiat(earnings?.yesterdayPrl)} />
-        <Window label="Estimat / lună" icon={<TrendingUp />} value={<>{amount(earnings?.estMonthlyPrl)}<Unit /></>} sub={fiat(earnings?.estMonthlyPrl)}>
+        <Window label="Ieri" icon={<Clock3 />} {...w(earnings?.yesterdayPrl)} />
+        <Window label="Estimat / lună" icon={<TrendingUp />} {...w(earnings?.estMonthlyPrl)}>
           <div className="text-[11px] text-subtle">media ultimelor 7 zile complete × 30</div>
         </Window>
-        <Window label="Ultimele 7 zile" icon={<CalendarDays />} value={<>{amount(earnings?.last7dPrl)}<Unit /></>} sub={fiat(earnings?.last7dPrl)} />
-        <Window label="Ultimele 30 zile" icon={<CalendarRange />} value={<>{amount(earnings?.last30dPrl)}<Unit /></>} sub={fiat(earnings?.last30dPrl)} />
-        <Window label="Total plătit" icon={<PiggyBank />} value={<>{amount(k.paid)}<Unit /></>} sub={fiat(k.paid)} />
+        <Window label="Ultimele 7 zile" icon={<CalendarDays />} {...w(earnings?.last7dPrl)} />
+        <Window label="Ultimele 30 zile" icon={<CalendarRange />} {...w(earnings?.last30dPrl)} />
+        <Window label="Total plătit" icon={<PiggyBank />} {...w(k.paid)} />
         <Window
           label="Următoarea plată"
           icon={<Target />}
