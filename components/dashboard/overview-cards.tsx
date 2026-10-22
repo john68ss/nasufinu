@@ -76,7 +76,20 @@ export function OverviewCards({ data, now }: { data: DashboardData; now: number 
   const unpaid = balance?.total ?? (balance?.confirmed != null ? balance.confirmed + (pending ?? 0) : (kryptex.data?.unpaid ?? null));
   const totalEarned = paid != null || unpaid != null ? (paid ?? 0) + (unpaid ?? 0) : null;
   const price = m?.priceUsd ?? null;
-  const fiat = (prl: number | null) => (prl == null || price == null ? null : formatMoneyIn(moneyFromUsd(prl * price, data.fx.data), cur));
+  const money = (prl: number | null) => (prl == null || price == null ? null : moneyFromUsd(prl * price, data.fx.data));
+  const secondCur = cur === "USD" ? "EUR" : "USD";
+  const earned = (prl: number | null, tone: Tone) => {
+    const mny = money(prl);
+    if (prl == null) return <Value tone={tone}>{DASH}</Value>;
+    if (!mny) return <Value tone={tone}>{formatCoin(prl)}</Value>;
+    return (
+      <>
+        <Value tone={tone}>{formatMoneyIn(mny, cur)}</Value>
+        <div className="tabular text-sm font-semibold leading-tight">{formatMoneyIn(mny, secondCur)}</div>
+        <Hint>{formatCoin(prl)}</Hint>
+      </>
+    );
+  };
 
   return (
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
@@ -85,16 +98,12 @@ export function OverviewCards({ data, now }: { data: DashboardData; now: number 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="text-[10px] uppercase tracking-wider text-muted">Total pe zi (azi, UTC)</div>
-              <Value tone="ok">{earnedToday != null ? formatCoin(earnedToday) : DASH}</Value>
-              <Hint>{fiat(earnedToday) ? `≈ ${fiat(earnedToday)}` : "Neraportat încă"}</Hint>
+              {earnedToday != null ? earned(earnedToday, "ok") : <Hint>Neraportat încă</Hint>}
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider text-muted">Total (plătit + sold + în așteptare)</div>
-              <Value tone="accent">{totalEarned != null ? formatCoin(totalEarned) : DASH}</Value>
-              <Hint>
-                {fiat(totalEarned) ? `≈ ${fiat(totalEarned)} · ` : ""}din care în așteptare {pending != null ? formatCoin(pending) : DASH}
-                {" "}(neconfirmat)
-              </Hint>
+              {earned(totalEarned, "accent")}
+              <Hint>din care în așteptare (neconfirmat): {pending != null ? formatCoin(pending) : DASH}</Hint>
             </div>
           </div>
         ) : (
