@@ -85,7 +85,7 @@ export function OverviewCards({ data, now }: { data: DashboardData; now: number 
     return (
       <>
         <Value tone={tone}>{formatMoneyIn(mny, cur)}</Value>
-        <div className="tabular text-sm font-semibold leading-tight">{formatMoneyIn(mny, secondCur)}</div>
+        <Value tone={tone}>{formatMoneyIn(mny, secondCur)}</Value>
         <Hint>{formatCoin(prl)}</Hint>
       </>
     );
